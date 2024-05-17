@@ -1,0 +1,45 @@
+diff -r 9eef87b59206 include/spinlock/clh.h
+--- a/include/spinlock/clh.h	Sun Apr 07 12:29:13 2024 -0400
++++ b/include/spinlock/clh.h	Fri May 17 13:47:09 2024 +0900
+@@ -78,7 +78,7 @@
+ 	 * Mark current request as last request. Save reference to previous
+ 	 * request.
+ 	 */
+-	previous = ck_pr_fas_ptr(queue, thread);
++	previous = (struct ck_spinlock_clh *)ck_pr_fas_ptr(queue, thread);
+ 	thread->previous = previous;
+ 
+ 	/* Wait until previous thread is done with lock. */
+diff -r 9eef87b59206 include/spinlock/hclh.h
+--- a/include/spinlock/hclh.h	Sun Apr 07 12:29:13 2024 -0400
++++ b/include/spinlock/hclh.h	Fri May 17 13:47:09 2024 +0900
+@@ -88,7 +88,7 @@
+ 	ck_pr_fence_store_atomic();
+ 
+ 	/* Mark current request as last request. Save reference to previous request. */
+-	previous = ck_pr_fas_ptr(local_queue, thread);
++	previous = (struct ck_spinlock_hclh *)ck_pr_fas_ptr(local_queue, thread);
+ 	thread->previous = previous;
+ 
+ 	/* Wait until previous thread from the local queue is done with lock. */
+@@ -107,7 +107,7 @@
+ 
+ 	/* Now we need to splice the local queue into the global queue. */
+ 	local_tail = ck_pr_load_ptr(local_queue);
+-	previous = ck_pr_fas_ptr(glob_queue, local_tail);
++	previous = (struct ck_spinlock_hclh *)ck_pr_fas_ptr(glob_queue, local_tail);
+ 
+ 	ck_pr_store_uint(&local_tail->splice, true);
+ 
+diff -r 9eef87b59206 include/spinlock/mcs.h
+--- a/include/spinlock/mcs.h	Sun Apr 07 12:29:13 2024 -0400
++++ b/include/spinlock/mcs.h	Fri May 17 13:47:09 2024 +0900
+@@ -97,7 +97,7 @@
+ 	 * returns NULL, it means the queue was empty. If the queue was empty,
+ 	 * then the operation is complete.
+ 	 */
+-	previous = ck_pr_fas_ptr(queue, node);
++	previous = (struct ck_spinlock_mcs *)ck_pr_fas_ptr(queue, node);
+ 	if (previous != NULL) {
+ 		/*
+ 		 * Let the previous lock holder know that we are waiting on
